@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Cardiac Arrest Centres Map</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+      }
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+      .popup-content {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .popup-content strong {
+        font-size: 16px;
+      }
+      .popup-section {
+        margin-bottom: 8px;
+      }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="search-container" style="position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.9); padding: 5px 8px; border-radius: 4px; box-shadow: 0 0 6px rgba(0,0,0,0.3);">
+      <input type="text" id="search-box" placeholder="Search services..." style="width: 200px; padding: 4px; font-size: 14px;" list="services-list" />
+      <datalist id="services-list"></datalist>
+    </div>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+      const hospitals = [
+  {
+    "id": "altnagelvin-area-hospital",
+    "name": "Altnagelvin Area Hospital",
+    "lat": 54.985,
+    "lng": -7.295,
+    "postcode": "BT47 6SB",
+    "phone": "028 7134 5171",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "barts-heart-centre",
+    "name": "Barts Heart Centre (St Bartholomew\u2019s Hospital)",
+    "lat": 51.5175,
+    "lng": -0.1001,
+    "postcode": "EC1A 7BE",
+    "phone": "020 7377 7000",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "bristol-heart-institute",
+    "name": "Bristol Heart Institute (Bristol Royal Infirmary)",
+    "lat": 51.459,
+    "lng": -2.5963,
+    "postcode": "BS2 8HW",
+    "phone": "0117 923 0000",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "derriford-hospital",
+    "name": "Derriford Hospital (Plymouth)",
+    "lat": 50.4162,
+    "lng": -4.1141,
+    "postcode": "PL6 8DH",
+    "phone": "01752 202082",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "essex-cardiothoracic-centre",
+    "name": "Essex Cardiothoracic Centre (Basildon Hospital)",
+    "lat": 51.5579,
+    "lng": 0.4517,
+    "postcode": "SS16 5NL",
+    "phone": "01268 524900",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "freeman-hospital",
+    "name": "Freeman Hospital (Newcastle upon Tyne)",
+    "lat": 55.002,
+    "lng": -1.594,
+    "postcode": "NE7 7DN",
+    "phone": "0191 233 6161",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "glenfield-hospital",
+    "name": "Glenfield Hospital (Leicester)",
+    "lat": 52.65524,
+    "lng": -1.17961,
+    "postcode": "LE3 9QP",
+    "phone": "0300 303 1573",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "hammersmith-hospital",
+    "name": "Hammersmith Hospital (London)",
+    "lat": 51.517422,
+    "lng": -0.234698,
+    "postcode": "W12 0HS",
+    "phone": "020 3311 3311",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "harefield-hospital",
+    "name": "Harefield Hospital (Uxbridge)",
+    "lat": 51.60711,
+    "lng": -0.4852,
+    "postcode": "UB9 6JH",
+    "phone": "01895 823737",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "james-cook-university-hospital",
+    "name": "James Cook University Hospital (Middlesbrough)",
+    "lat": 54.552,
+    "lng": -1.214,
+    "postcode": "TS4 3BW",
+    "phone": "01642 850850",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "john-radcliffe-hospital",
+    "name": "John Radcliffe Hospital (Oxford)",
+    "lat": 51.76361,
+    "lng": -1.21861,
+    "postcode": "OX3 9DU",
+    "phone": "0300 304 7777",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "morriston-hospital",
+    "name": "Morriston Hospital (Swansea)",
+    "lat": 51.68417,
+    "lng": -3.93472,
+    "postcode": "SA6 6NL",
+    "phone": "01792 702222",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "northern-general-hospital",
+    "name": "Northern General Hospital (Sheffield)",
+    "lat": 53.41083,
+    "lng": -1.45833,
+    "postcode": "S5 7AU",
+    "phone": "0114 243 4343",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "st-thomas-hospital",
+    "name": "St Thomas\u2019 Hospital (London)",
+    "lat": 51.49796,
+    "lng": -0.11888,
+    "postcode": "SE1 7EH",
+    "phone": "020 7188 7188",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "kings-college-hospital",
+    "name": "King\u2019s College Hospital (London)",
+    "lat": 51.468078,
+    "lng": -0.09389,
+    "postcode": "SE5 9RS",
+    "phone": "020 3299 9000",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "st-georges-hospital",
+    "name": "St George\u2019s Hospital (London)",
+    "lat": 51.426682,
+    "lng": -0.175694,
+    "postcode": "SW17 0QT",
+    "phone": "020 8672 1255",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "royal-free-hospital",
+    "name": "Royal Free Hospital (London)",
+    "lat": 51.553227,
+    "lng": -0.165298,
+    "postcode": "NW3 2QG",
+    "phone": "020 7830 2127",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "royal-papworth-hospital",
+    "name": "Royal Papworth Hospital (Cambridge)",
+    "lat": 52.173618,
+    "lng": 0.135626,
+    "postcode": "CB2 0AY",
+    "phone": "01223 638000",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "queen-elizabeth-hospital",
+    "name": "Queen Elizabeth Hospital (Birmingham)",
+    "lat": 52.453198,
+    "lng": -1.938471,
+    "postcode": "B15 2TH",
+    "phone": "0121 371 2000",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "manchester-heart-centre",
+    "name": "Manchester Heart Centre (Manchester Royal Infirmary)",
+    "lat": 53.462452,
+    "lng": -2.227709,
+    "postcode": "M13 9WL",
+    "phone": "0161 276 1234",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "wythenshawe-hospital",
+    "name": "Wythenshawe Hospital (Manchester)",
+    "lat": 53.387938,
+    "lng": -2.293183,
+    "postcode": "M23 9LT",
+    "phone": "0161 998 7070",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "liverpool-heart-and-chest-hospital",
+    "name": "Liverpool Heart and Chest Hospital",
+    "lat": 53.411167,
+    "lng": -2.897989,
+    "postcode": "L14 3PE",
+    "phone": "0151 600 1953",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "royal-stoke-university-hospital",
+    "name": "Royal Stoke University Hospital (Stoke-on-Trent)",
+    "lat": 53.003262,
+    "lng": -2.211798,
+    "postcode": "ST4 6QG",
+    "phone": "01782 715444",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "leeds-general-infirmary",
+    "name": "Leeds General Infirmary (Leeds)",
+    "lat": 53.801461,
+    "lng": -1.551748,
+    "postcode": "LS1 3EX",
+    "phone": "0113 243 2799",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "royal-sussex-county-hospital",
+    "name": "Royal Sussex County Hospital (Brighton)",
+    "lat": 50.819462,
+    "lng": -0.118149,
+    "postcode": "BN2 5BE",
+    "phone": "01273 696955",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "southampton-general-hospital",
+    "name": "Southampton General Hospital (Southampton)",
+    "lat": 50.933011,
+    "lng": -1.435095,
+    "postcode": "SO16 6YD",
+    "phone": "023 8077 7222",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "university-hospital-of-wales",
+    "name": "University Hospital of Wales (Cardiff)",
+    "lat": 51.507156,
+    "lng": -3.189855,
+    "postcode": "CF14 4XW",
+    "phone": "029 2074 7747",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "royal-victoria-hospital",
+    "name": "Royal Victoria Hospital (Belfast)",
+    "lat": 54.594237,
+    "lng": -5.954027,
+    "postcode": "BT12 6BA",
+    "phone": "028 9024 0503",
+    "eligibility": "Not specified"
+  },
+  {
+    "id": "norfolk-norwich-university-hospital",
+    "name": "Norfolk and Norwich University Hospital",
+    "lat": 52.617,
+    "lng": 1.22,
+    "postcode": "NR4 7UY",
+    "phone": "01603 286286",
+    "eligibility": "Not specified"
+  }
+];
+
+      const airAmbulances = [
+  {
+    "id": "air-ambulance-northern-ireland",
+    "name": "Air Ambulance Northern Ireland",
+    "lat": 54.488765,
+    "lng": -6.092659,
+    "postcode": "BT27 5RF",
+    "followUp": "No (informal only)",
+    "eligibility": "Not specified",
+    "description": "No dedicated aftercare programme; the charity keeps in touch via events and encourages patients and families to share their stories.",
+    "contact": "Not specified",
+    "sourceLink": "https://airambulanceni.org"
+  },
+  {
+    "id": "cornwall-air-ambulance-trust",
+    "name": "Cornwall Air Ambulance Trust",
+    "lat": 50.432492,
+    "lng": -4.984158,
+    "postcode": "TR8 4DY",
+    "followUp": "No (informal only)",
+    "eligibility": "Not specified",
+    "description": "No formal aftercare programme; invites former patients to share their stories.",
+    "contact": "Not specified",
+    "sourceLink": "https://cornwallairambulancetrust.org"
+  },
+  {
+    "id": "devon-air-ambulance-trust",
+    "name": "Devon Air Ambulance Trust",
+    "lat": 50.740825,
+    "lng": -3.481858,
+    "postcode": "EX4 8NS",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "The Patient & Family Support service offers practical and emotional support after an incident.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.daat.org"
+  },
+  {
+    "id": "dorset-somerset-air-ambulance",
+    "name": "Dorset & Somerset Air Ambulance",
+    "lat": 50.983973,
+    "lng": -3.200976,
+    "postcode": "TA21 9JQ",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "Patient and Family Liaison Nurses provide follow\u2011up care and support.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.dsairambulance.org.uk"
+  },
+  {
+    "id": "east-anglian-air-ambulance",
+    "name": "East Anglian Air Ambulance",
+    "lat": 52.673176,
+    "lng": 1.269394,
+    "postcode": "NR6 6EG",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "An Aftercare Team offers support for patients, bystanders and families, including bereavement support.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.eaaa.org.uk"
+  },
+  {
+    "id": "essex-herts-air-ambulance",
+    "name": "Essex & Herts Air Ambulance",
+    "lat": 51.907739,
+    "lng": 0.682331,
+    "postcode": "CO6 2NS",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "Two Patient Liaison Managers provide emotional and bereavement support.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.ehaat.org"
+  },
+  {
+    "id": "great-north-air-ambulance-service",
+    "name": "Great North Air Ambulance Service",
+    "lat": 54.525374,
+    "lng": -1.380925,
+    "postcode": "TS16 0QB",
+    "followUp": "No (no formal programme)",
+    "eligibility": "Not specified",
+    "description": "No formal aftercare programme; patients can contact the charity via general channels.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.greatnorthairambulance.co.uk"
+  },
+  {
+    "id": "great-western-air-ambulance-charity",
+    "name": "Great Western Air Ambulance Charity",
+    "lat": 51.439988,
+    "lng": -2.62809,
+    "postcode": "BS3 2JH",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "The Patient Support service provides follow\u2011up care and support.",
+    "contact": "0303 4444 999",
+    "sourceLink": "https://greatwesternairambulance.com"
+  },
+  {
+    "id": "hampshire-isle-of-wight-air-ambulance",
+    "name": "Hampshire & Isle of Wight Air Ambulance",
+    "lat": 50.941027,
+    "lng": -1.470438,
+    "postcode": "SO16 0BT",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "An Aftercare Team provides ongoing support and signposting, led by Aftercare Managers including nurse Nikki Harris.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.hiowaa.org"
+  },
+  {
+    "id": "kent-surrey-sussex-air-ambulance",
+    "name": "Kent, Surrey & Sussex Air Ambulance",
+    "lat": 51.345221,
+    "lng": 0.506497,
+    "postcode": "ME5 9SD",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "The Patient and Family Aftercare Service, launched in 2022, offers support for patients and families.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.aakss.org.uk"
+  },
+  {
+    "id": "lincs-notts-air-ambulance",
+    "name": "Lincs & Notts Air Ambulance",
+    "lat": 53.171989,
+    "lng": -0.50793,
+    "postcode": "LN4 2GW",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "The Aftercare Team offers personalised support via phone and email check\u2011ins.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.ambucopter.org.uk"
+  },
+  {
+    "id": "londons-air-ambulance-charity",
+    "name": "London\u2019s Air Ambulance Charity",
+    "lat": 51.512491,
+    "lng": -0.072883,
+    "postcode": "E1 8AN",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "Patient liaison nurses from Barts Health provide aftercare support, active since 2014.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.londonsairambulance.org.uk"
+  },
+  {
+    "id": "magpas-air-ambulance",
+    "name": "Magpas Air Ambulance",
+    "lat": 52.37736,
+    "lng": -0.248827,
+    "postcode": "PE28 4YF",
+    "followUp": "No (informal only)",
+    "eligibility": "Not specified",
+    "description": "No formal aftercare; survivors can connect via a Facebook group.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.magpas.org.uk"
+  },
+  {
+    "id": "midlands-air-ambulance-charity",
+    "name": "Midlands Air Ambulance Charity",
+    "lat": 52.64712,
+    "lng": -2.314772,
+    "postcode": "TF11 8UR",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "The Patient Liaison & Aftercare Service launched in April 2024 offers follow\u2011up support.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.midlandsairambulance.com"
+  },
+  {
+    "id": "north-west-air-ambulance-charity",
+    "name": "North West Air Ambulance Charity",
+    "lat": 53.489772,
+    "lng": -2.850378,
+    "postcode": "L33 7UY",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "The Aftercare Service is delivered in collaboration with hospital partners.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.nwaa.net"
+  },
+  {
+    "id": "scotlands-charity-air-ambulance",
+    "name": "Scotland\u2019s Charity Air Ambulance",
+    "lat": 56.435128,
+    "lng": -3.37423,
+    "postcode": "PH2 6PL",
+    "followUp": "No (no programme)",
+    "eligibility": "Not specified",
+    "description": "No dedicated aftercare; survivors are supported by NHS Scotland services.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.scaa.org.uk"
+  },
+  {
+    "id": "thames-valley-air-ambulance",
+    "name": "Thames Valley Air Ambulance",
+    "lat": 51.65,
+    "lng": -0.9,
+    "postcode": "HP14 3SX",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "The Patient and Family Aftercare programme, expanded in 2022, offers comprehensive support.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.tvairambulance.org.uk"
+  },
+  {
+    "id": "air-ambulance-service",
+    "name": "The Air Ambulance Service (WNAA & DLRAA)",
+    "lat": 52.371,
+    "lng": -1.267,
+    "postcode": "CV21 3RQ",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "Provides an active aftercare programme led by Clinical Liaison Officer Justine Alexander.",
+    "contact": "Not specified",
+    "sourceLink": "https://theairambulanceservice.org.uk"
+  },
+  {
+    "id": "wales-air-ambulance",
+    "name": "Wales Air Ambulance Charity",
+    "lat": 51.684,
+    "lng": -4.132,
+    "postcode": "SA14 8LQ",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "A robust aftercare support programme with patient liaison nurses Jo Yeoman and Hayley Whitehead.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.walesairambulance.com"
+  },
+  {
+    "id": "wiltshire-air-ambulance",
+    "name": "Wiltshire Air Ambulance",
+    "lat": 51.333,
+    "lng": -2.161,
+    "postcode": "BA14 6JX",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "An Aftercare Support Team provides ongoing support and guidance.",
+    "contact": "Not specified",
+    "sourceLink": "https://www.wiltshireairambulance.co.uk"
+  },
+  {
+    "id": "yorkshire-air-ambulance",
+    "name": "Yorkshire Air Ambulance",
+    "lat": 53.694,
+    "lng": -1.832,
+    "postcode": "HX5 0HQ",
+    "followUp": "Yes",
+    "eligibility": "Not specified",
+    "description": "The patient and family support initiative provides dedicated support; contact via patientcare@yaa.org.uk.",
+    "contact": "patientcare@yaa.org.uk",
+    "sourceLink": "https://www.yorkshireairambulance.org.uk"
+  }
+];
+
+      const map = L.map('map').setView([54.5, -3], 6);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      const hospitalIcon = L.divIcon({
+        html: '<span style="font-size:24px">🏥</span>',
+        className: '',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12]
+      });
+      const helicopterIcon = L.divIcon({
+        html: '<span style="font-size:24px">🚁</span>',
+        className: '',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12]
+      });
+
+      const markersLayer = new L.LayerGroup().addTo(map);
+      const allMarkers = [];
+
+      hospitals.forEach(hospital => {
+        const marker = L.marker([hospital.lat, hospital.lng], {
+          icon: hospitalIcon,
+          title: hospital.name
+        });
+        const popupContent = `
+          <div class="popup-content">
+            <div class="popup-section"><strong>${hospital.name}</strong></div>
+            <div class="popup-section"><em>Follow-up care service offered:</em> Not specified</div>
+            <div class="popup-section"><em>Eligibility:</em> ${hospital.eligibility}</div>
+            <div class="popup-section"><em>Description:</em> Hospital providing specialist cardiac arrest care.</div>
+            <div class="popup-section"><em>Contact:</em> Tel: <a href="tel:${hospital.phone.replace(/\s+/g, '')}">${hospital.phone}</a></div>
+            <div class="popup-section"><em>Source:</em> N/A</div>
+          </div>
+        `;
+        marker.bindPopup(popupContent);
+        markersLayer.addLayer(marker);
+        allMarkers.push({ name: hospital.name, marker: marker });
+      });
+
+      airAmbulances.forEach(service => {
+        const marker = L.marker([service.lat, service.lng], {
+          icon: helicopterIcon,
+          title: service.name
+        });
+        const popupContent = `
+          <div class="popup-content">
+            <div class="popup-section"><strong>${service.name}</strong></div>
+            <div class="popup-section"><em>Follow-up care service offered:</em> ${service.followUp}</div>
+            <div class="popup-section"><em>Eligibility:</em> ${service.eligibility}</div>
+            <div class="popup-section"><em>Description:</em> ${service.description}</div>
+            <div class="popup-section"><em>Contact:</em> ${service.contact}</div>
+            <div class="popup-section"><em>Source:</em> <a href="${service.sourceLink}" target="_blank">${service.sourceLink}</a></div>
+          </div>
+        `;
+        marker.bindPopup(popupContent);
+        markersLayer.addLayer(marker);
+        allMarkers.push({ name: service.name, marker: marker });
+      });
+
+      const servicesList = document.getElementById('services-list');
+      allMarkers.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.name;
+        servicesList.appendChild(opt);
+      });
+
+      const searchBox = document.getElementById('search-box');
+      function performSearch() {
+        const query = searchBox.value.trim().toLowerCase();
+        if (!query) return;
+        const match = allMarkers.find(item => item.name.toLowerCase().includes(query));
+        if (match) {
+          const latlng = match.marker.getLatLng();
+          map.setView(latlng, 11);
+          match.marker.openPopup();
+        }
+      }
+      searchBox.addEventListener('change', performSearch);
+      searchBox.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          performSearch();
+        }
+      });
+    </script>
+</body>
+</html>
