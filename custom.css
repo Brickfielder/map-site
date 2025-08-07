@@ -1,0 +1,6 @@
+/* Custom CSS for wrap image */
+.wrap-image img {
+  float: left;
+  margin-right: 20px;
+  width: 300px;
+}
